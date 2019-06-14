@@ -1,7 +1,8 @@
 #!/usr/bin/python
-import xmlrpclib,  argparse,  getpass,  textwrap,  sys,  time
+import xmlrpclib,  argparse,  getpass,  textwrap,  sys,  time,  os
 from datetime import datetime
 from mymodules import newoptchannels
+
 class Password(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
         if values is None:
@@ -10,6 +11,8 @@ class Password(argparse.Action):
         setattr(namespace, self.dest, values)
 
 child_channels = []
+directory = '/var/log/spmigration/'
+
 def checktarget_channel(client,  key,  sid,  new_base_channel):
     valid = False
     try:
@@ -28,8 +31,17 @@ def checktarget_channel(client,  key,  sid,  new_base_channel):
         sys.exit(1)
     return valid
 
+def create_dirs():
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    return directory
+    
 def writedata_to_file(minion_name,  logmessage):
-    filename = '/var/log/spmigration/' + minion_name
+    try:
+        dirname = create_dirs()
+    except AssertionError as e:
+        print(e)
+    filename = dirname + minion_name
     try:
         f = open(filename, "w")
         f.write(logmessage)
@@ -47,7 +59,7 @@ def main():
     
     Sample command:
     
-                  python spmigration.py -s bjsuma.bo2go.home -u bjin -p suse1234 -newbase dev-sles12-sp4-pool-x86_64 -fromsp sp3 -tosp sp4 --debug\n \
+        python sp-migration.py -s localhost -u bjin -p suse1234 -newbase sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 -d\n \
     
     If -x is not specified the SP Migration is always a dryRun.
      ''')) 
