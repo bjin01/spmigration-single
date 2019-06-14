@@ -8,7 +8,7 @@ __dryrun:__
 __execution:__
 ```python sp-migration.py -s localhost -u bjin -p suse1234 -newbase sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 -d```
 
-help:
+__help:__
 ```
 # python sp-migration.py -h
 usage: PROG [-h] [-x] -s SERVER -u USERNAME -p [PASSWORD]
