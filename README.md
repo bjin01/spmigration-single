@@ -1,11 +1,11 @@
 # spmigration-single
 auto service pack migration for single server
 
-Usage:
-dryrun:
+__Usage__:
+__dryrun:__
 ```python spmigration.py -s bjsuma.bo2go.home -u bjin -p suse1234 -newbase dev-sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 --debug```
 
-execution:
+__execution:__
 ```python sp-migration.py -s localhost -u bjin -p suse1234 -newbase sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 -d```
 
 help:
