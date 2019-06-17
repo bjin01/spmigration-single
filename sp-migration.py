@@ -1,7 +1,8 @@
 #!/usr/bin/python
+
 import xmlrpclib,  argparse,  getpass,  textwrap,  sys,  time,  os
 from datetime import datetime
-from mymodules import newoptchannels
+from mymodules import newoptchannels,  saltapi
 
 class Password(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
@@ -92,13 +93,17 @@ def main():
     else:
         dryRun = 1
 
-    target_minion = args.minion
+    target_minion = args.minion    
     new_base_channel = args.new_base_channel
     
     previous_sp = args.migrate_from_servicepack
     new_sp = args.migrate_to_servicepack
     
     serverid = client.system.getId(key,  target_minion)
+    if not serverid:
+        print("target host %s not found in suse manager." %(target_minion))
+        sys.exit(1)
+        
     for s in serverid:
         sid = s['id']
         no_packages = str(s['outdated_pkg_count'])
@@ -128,6 +133,7 @@ def main():
         optionalChannels = getoptchannels.find_replace(previous_sp, new_sp)
     except AssertionError as error:
         log(error)
+    saltapi.saltping(target_minion)
     try:
         spjob = client.system.scheduleSPMigration(key, sid,  new_base_channel,  optionalChannels,  dryRun,  earliest_occurrence)
     except AssertionError as error:
