@@ -68,6 +68,7 @@ def main():
     parser.add_argument("-s", "--server", help="Enter your suse manager host address e.g. myserver.abd.domain",  default='localhost',  required=True)
     parser.add_argument("-u", "--username", help="Enter your suse manager loginid e.g. admin ", default='admin',  required=True)
     parser.add_argument('-p', action=Password, nargs='?', dest='password', help='Enter your password',  required=True)
+    parser.add_argument("-t", "--system_type", help="Enter type of your target systems, either traditional or salt, default is salt", default='salt', required=True)
     parser.add_argument("-newbase", "--new_base_channel", help="Enter the new base channel label. e.g. sles12-sp4-pool-x86_64 ",  required=False)
     parser.add_argument("-fromsp", "--migrate_from_servicepack", help="Enter the current service pack version e.g. sp3\n of course you can jump from sp3 to sp5 as well.",  required=False)
     parser.add_argument("-tosp", "--migrate_to_servicepack", help="Enter the target service pack version e.g. sp4\n of course you can jump from sp3 to sp5 as well.",  required=False)
@@ -133,7 +134,9 @@ def main():
         optionalChannels = getoptchannels.find_replace(previous_sp, new_sp)
     except AssertionError as error:
         log(error)
-    saltapi.saltping(target_minion)
+    if "salt" in args.system_type:
+        saltapi.saltping(target_minion)
+        
     try:
         spjob = client.system.scheduleSPMigration(key, sid,  new_base_channel,  optionalChannels,  dryRun,  earliest_occurrence)
     except AssertionError as error:
