@@ -118,7 +118,6 @@ def main():
             print('the system has outdated packages: %s' %(no_packages))
             try:
                 basechannel = client.system.getSubscribedBaseChannel(key,  sid)
-                print("basechannel: %s" % basechannel)
             except AssertionError as error:
                 print(error)
             log('Current Base Channel is: ' + basechannel['label'])
@@ -146,6 +145,7 @@ def main():
         
     try:
         spjob = client.system.scheduleSPMigration(key, sid,  new_base_channel,  optionalChannels,  dryRun,  earliest_occurrence)
+
     except AssertionError as error:
         log(error)
     
@@ -154,6 +154,7 @@ def main():
         if listprogresssystems:
             for k in listprogresssystems:
                 if k['server_id'] == sid:
+                    print("Job %s is pending." %str(spjob))
                     log("Job %s is pending." %str(spjob))
 
     """ z = 0
