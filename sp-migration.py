@@ -60,7 +60,8 @@ def main():
     
     Sample command:
     
-        python sp-migration.py -s localhost -u bjin -p suse1234 -newbase sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 -d\n \
+        # python sp-migration.py -s localhost -u bjin -p suse1234 -t traditional 
+        -newbase  sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m caasp02.bo2go.home -dn \
     
     If -x is not specified the SP Migration is always a dryRun.
      ''')) 
@@ -72,7 +73,7 @@ def main():
     parser.add_argument("-newbase", "--new_base_channel", help="Enter the new base channel label. e.g. sles12-sp4-pool-x86_64 ",  required=False)
     parser.add_argument("-fromsp", "--migrate_from_servicepack", help="Enter the current service pack version e.g. sp3\n of course you can jump from sp3 to sp5 as well.",  required=False)
     parser.add_argument("-tosp", "--migrate_to_servicepack", help="Enter the target service pack version e.g. sp4\n of course you can jump from sp3 to sp5 as well.",  required=False)
-    parser.add_argument("-m", "--minion", help="Enter the target minion id e.g. myhost.richemont.com\n.",  required=True)
+    parser.add_argument("-m", "--minion", help="Enter the target minion id e.g. myhost.test.com\n.",  required=True)
     parser.add_argument("-d", "--debug", dest='debug', default=False, action='store_true')
     args = parser.parse_args()
     
@@ -109,6 +110,7 @@ def main():
         sid = s['id']
         no_packages = str(s['outdated_pkg_count'])
         log("The server ID is: %s" % (str(sid)) + "   " + s['name'])
+        
         if s['outdated_pkg_count'] > 10000:
             print('BUT the system has too many outdated packages: %s' %(no_packages))
             sys.exit(1)
@@ -116,6 +118,7 @@ def main():
             print('the system has outdated packages: %s' %(no_packages))
             try:
                 basechannel = client.system.getSubscribedBaseChannel(key,  sid)
+                print("basechannel: %s" % basechannel)
             except AssertionError as error:
                 print(error)
             log('Current Base Channel is: ' + basechannel['label'])
@@ -123,15 +126,19 @@ def main():
             log('Current Child Channels are:')
             for c in childchannels:
                 log("\t" +  c['label'])
+                
             valid = checktarget_channel(client,  key,  sid, new_base_channel  )
             log("The given target base channel is valid: " + str(valid))
 
     try:
         getoptchannels = newoptchannels.getnew_optionalChannels(client, key, sid)
+        
     except AssertionError as error:
         log(error)
     try:
         optionalChannels = getoptchannels.find_replace(previous_sp, new_sp)
+        for c in optionalChannels:
+                log("\t childs: " +  c)
     except AssertionError as error:
         log(error)
     if "salt" in args.system_type:
@@ -142,7 +149,14 @@ def main():
     except AssertionError as error:
         log(error)
     
-    z = 0
+    if spjob != 0:
+        listprogresssystems = client.schedule.listInProgressSystems(key, spjob)
+        if listprogresssystems:
+            for k in listprogresssystems:
+                if k['server_id'] == sid:
+                    log("Job %s is pending." %str(spjob))
+
+    """ z = 0
     while True:
         time.sleep(5)
         if spjob != 0:
@@ -184,7 +198,7 @@ def main():
                 logmessage = "Job is not done yet, but resulted an unknown reason! " + str(spjob)
                 output_file = writedata_to_file(target_minion,  logmessage)
                 log("The output message can be found in: " + output_file)
-                sys.exit(1)
+                sys.exit(1) """
                 
     client.auth.logout(key)
 

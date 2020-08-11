@@ -6,10 +6,10 @@ added new argument ```-t``` for type of targets, either traditional or salt. If 
 
 __Usage__:
 __dryrun:__
-```python spmigration.py -s bjsuma.bo2go.home -u bjin -p suse1234 -t traditional -newbase dev-sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 --debug```
+```# python sp-migration.py -s localhost -u bjin -p suse1234 -t traditional -newbase sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m myhost.test.com -d```
 
 __execution:__
-```python sp-migration.py -s localhost -u bjin -p suse1234 -t traditional -newbase sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 -d```
+```python sp-migration.py -s localhost -u bjin -p suse1234 -t traditional -x -newbase sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m myhost.test.com -d```
 
 __help:__
 ```
