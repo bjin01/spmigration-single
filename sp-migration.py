@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-import xmlrpclib,  argparse,  getpass,  textwrap,  sys,  time,  os
+import argparse, getpass, textwrap, sys, time, os, yaml
 from datetime import datetime
-from mymodules import newoptchannels,  saltapi
+from mymodules import newoptchannels, saltapi
+from xmlrpc.client import ServerProxy, Error, DateTime
 
 class Password(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
@@ -13,6 +14,32 @@ class Password(argparse.Action):
 
 child_channels = []
 directory = '/var/log/spmigration/'
+
+def get_login(path):
+    
+    if path == "":
+        path = os.path.join(os.environ["HOME"], "suma_config.yaml")
+    with open(path) as f:
+        login = yaml.load_all(f, Loader=yaml.FullLoader)
+        for a in login:
+            login = a
+
+    return login
+
+def login_suma(login):
+    MANAGER_URL = "https://"+ login['suma_host'] +"/rpc/api"
+    MANAGER_LOGIN = login['suma_user']
+    MANAGER_PASSWORD = login['suma_password']
+    SUMA = "http://" + login['suma_user'] + ":" + login['suma_password'] + "@" + login['suma_host'] + "/rpc/api"
+    with ServerProxy(SUMA) as session_client:
+
+    #session_client = xmlrpclib.Server(MANAGER_URL, verbose=0)
+        session_key = session_client.auth.login(MANAGER_LOGIN, MANAGER_PASSWORD)
+    return session_client, session_key
+
+def suma_logout(session, key):
+    session.auth.logout(key)
+    return
 
 def checktarget_channel(client,  key,  sid,  new_base_channel):
     valid = False
@@ -64,12 +91,11 @@ def main():
         -newbase  sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m caasp02.bo2go.home -dn \
     
     If -x is not specified the SP Migration is always a dryRun.
-     ''')) 
+     '''))
+    parser.add_argument("--config", help="Enter the config file name that contains login and channel information e.g. /root/suma_config.yaml",  required=False)
     parser.add_argument("-x", "--execute_migration", action="store_true")
-    parser.add_argument("-s", "--server", help="Enter your suse manager host address e.g. myserver.abd.domain",  default='localhost',  required=True)
-    parser.add_argument("-u", "--username", help="Enter your suse manager loginid e.g. admin ", default='admin',  required=True)
-    parser.add_argument('-p', action=Password, nargs='?', dest='password', help='Enter your password',  required=True)
-    parser.add_argument("-t", "--system_type", help="Enter type of your target systems, either traditional or salt, default is salt", default='salt', required=True)
+    
+    parser.add_argument("-t", "--system_type", help="Enter type of your target systems, either traditional or salt, default is salt", default='salt', required=False)
     parser.add_argument("-newbase", "--new_base_channel", help="Enter the new base channel label. e.g. sles12-sp4-pool-x86_64 ",  required=False)
     parser.add_argument("-fromsp", "--migrate_from_servicepack", help="Enter the current service pack version e.g. sp3\n of course you can jump from sp3 to sp5 as well.",  required=False)
     parser.add_argument("-tosp", "--migrate_to_servicepack", help="Enter the target service pack version e.g. sp4\n of course you can jump from sp3 to sp5 as well.",  required=False)
@@ -78,14 +104,24 @@ def main():
     args = parser.parse_args()
     
     DEBUG = args.debug
-    MANAGER_URL = "http://"+ args.server+"/rpc/api"
+    """ MANAGER_URL = "http://"+ args.server+"/rpc/api"
     MANAGER_LOGIN = args.username
     MANAGER_PASSWORD = args.password
     client = xmlrpclib.Server(MANAGER_URL, verbose=0)
-    key = client.auth.login(MANAGER_LOGIN, MANAGER_PASSWORD)
-    today = datetime.today()
-    earliest_occurrence = xmlrpclib.DateTime(today)
+    key = client.auth.login(MANAGER_LOGIN, MANAGER_PASSWORD) """
+    """ today = datetime.today()
+    earliest_occurrence = xmlrpclib.DateTime(today) """
     
+    nowlater = datetime.now()
+    earliest_occurrence = DateTime(nowlater)
+    if args.config:
+        suma_data = get_login(args.config)
+        client, key = login_suma(suma_data)
+    else:
+        conf_file = "/root/suma_config.yaml"
+        suma_data = get_login(conf_file)
+        client, key = login_suma(suma_data)
+
     def log(s):
         if DEBUG:
             print(s)
@@ -101,7 +137,7 @@ def main():
     previous_sp = args.migrate_from_servicepack
     new_sp = args.migrate_to_servicepack
     
-    serverid = client.system.getId(key,  target_minion)
+    serverid = client.system.getId(key, target_minion)
     if not serverid:
         print("target host %s not found in suse manager." %(target_minion))
         sys.exit(1)
@@ -156,52 +192,8 @@ def main():
                 if k['server_id'] == sid:
                     print("Job %s is pending." %str(spjob))
                     log("Job %s is pending." %str(spjob))
-
-    """ z = 0
-    while True:
-        time.sleep(5)
-        if spjob != 0:
-            listprogresssystems = client.schedule.listInProgressSystems(key, spjob)
-            if listprogresssystems:
-                for k in listprogresssystems:
-                    if k['server_id'] == sid:
-                        log("Job %s is pending." %str(spjob))
-                        z = 1
-            else:
-                z = 0
-        if z == 0:
-            listfailedsystems = client.schedule.listFailedSystems(key, spjob)
-            if listfailedsystems:
-                for n in listfailedsystems:
-                    if n['server_id'] == sid:
-                        print("Job on %s failed with message: \n" %(target_minion))
-                        logmessage = target_minion + ': failed with message' + n['message']
-                        output_file = writedata_to_file(target_minion,  logmessage)
-                        log(n['message'])
-                        log("The output message can be found in: " + output_file)
-                        sys.exit(3)
-            else:
-                z = 4
-                    
-        if z == 4:
-            listsuccesssystems = client.schedule.listCompletedSystems(key, spjob)
-            if listsuccesssystems:
-                log(listsuccesssystems)
-                for m in listsuccesssystems:
-                    if m['server_id'] == sid:
-                        print("Job %s finished successfully." %str(spjob))
-                        logmessage = "Job " + str(spjob) + " for " + s['name'] + " finished successfully.\n\n" + m['message']
-                        output_file = writedata_to_file(target_minion,  logmessage)
-                        log("The output message can be found in: " + output_file)
-                        sys.exit(0)
-            else:
-                print("Job %s is not done yet, but resulted an unknown reason." %str(spjob))
-                logmessage = "Job is not done yet, but resulted an unknown reason! " + str(spjob)
-                output_file = writedata_to_file(target_minion,  logmessage)
-                log("The output message can be found in: " + output_file)
-                sys.exit(1) """
                 
-    client.auth.logout(key)
+    suma_logout(client, key)
 
 if __name__ == "__main__":
     main()
