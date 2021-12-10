@@ -11,10 +11,10 @@ added new argument ```-t``` for type of targets, either traditional or salt. If 
 
 __Usage__:
 __dryrun:__
-```# python sp-migration.py -c /root/suma_config.yaml -t traditional -newbase sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m myhost.test.com -d```
+```# python3 sp-migration.py -c /root/suma_config.yaml -t traditional -newbase sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m myhost.test.com -d```
 
 __execution:__
-```python sp-migration.py -c /root/suma_config.yaml -t traditional -x -newbase sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m myhost.test.com -d```
+```python3 sp-migration.py -c /root/suma_config.yaml -t traditional -x -newbase sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m myhost.test.com -d```
 
 __help:__
 ```
@@ -27,7 +27,7 @@ This scripts runs service pack migration for given base channel.
 
 Sample command:
 
-    python sp-migration.py -c /root/suma_config.yaml -t traditional -newbase sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 -d
+    python3 sp-migration.py -c /root/suma_config.yaml -t traditional -newbase sles12-sp4-pool-x86_64 -m zsles12sp3-test.bo2go.home -fromsp sp3 -tosp sp4 -d
 
 If -x is not specified the SP Migration is always a dryRun.
 
@@ -35,7 +35,7 @@ This scripts runs service pack migration for given base channel.
 
 Sample command:
 
-    # python sp-migration.py -s localhost -u bjin -p suse1234 -t traditional 
+    # python3 sp-migration.py -s localhost -u bjin -p suse1234 -t traditional 
     -newbase  sle-product-sles15-sp2-pool-x86_64 -fromsp sp1 -tosp sp2 -m caasp02.bo2go.home -dn     
 If -x is not specified the SP Migration is always a dryRun.
 
